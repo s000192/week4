@@ -1,13 +1,16 @@
 import detectEthereumProvider from "@metamask/detect-provider"
 import { Strategy, ZkIdentity } from "@zk-kit/identity"
 import { generateMerkleProof, Semaphore } from "@zk-kit/protocols"
-import { providers } from "ethers"
+import { Contract, providers, utils } from "ethers"
 import Head from "next/head"
-import React from "react"
+import React, { useMemo, useState } from "react"
+import Form from "../components/form"
 import styles from "../styles/Home.module.css"
+import Greeter from "artifacts/contracts/Greeters.sol/Greeters.json"
 
 export default function Home() {
-    const [logs, setLogs] = React.useState("Connect your wallet and greet!")
+    const [logs, setLogs] = useState("Connect your wallet and greet!")
+    const [greeting, setGreeting] = useState("")
 
     async function greet() {
         setLogs("Creating your Semaphore identity...")
@@ -59,6 +62,14 @@ export default function Home() {
         }
     }
 
+    useMemo(() => {
+        const provider = new providers.WebSocketProvider("ws://localhost:8545")
+        const contract = new Contract("0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512", Greeter.abi, provider)
+        contract.on("NewGreeting", (data, log) => {
+            setGreeting(log.data)
+        })
+    }, [])
+
     return (
         <div className={styles.container}>
             <Head>
@@ -77,6 +88,10 @@ export default function Home() {
                 <div onClick={() => greet()} className={styles.button}>
                     Greet
                 </div>
+
+                <p>{greeting}</p>
+
+                <Form />
             </main>
         </div>
     )
